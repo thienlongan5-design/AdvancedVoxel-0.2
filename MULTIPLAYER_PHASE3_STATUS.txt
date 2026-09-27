@@ -1,0 +1,11 @@
+ADVANCED VOXEL — MULTIPLAYER PHASE 3
+
+Added on top of Phase 2:
+- server voxel collision against authoritative main-world blocks
+- axis-separated movement resolution
+- small server-side step-up for low obstacles
+- server-side gravity/jump remains authoritative
+- player yaw normalized and dimension input restricted to known dimensions
+- block edits and player physics use the same authoritative room world edit map
+
+Still not completed: server-authoritative inventory/equipment, combat/damage, mobs, projectiles/skills, persistence and full dimension/world-generation parity for the replacement War World.

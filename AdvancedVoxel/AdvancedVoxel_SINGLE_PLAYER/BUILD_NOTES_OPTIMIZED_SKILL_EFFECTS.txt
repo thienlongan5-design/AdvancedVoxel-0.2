@@ -1,0 +1,16 @@
+ADVANCED VOXEL - OPTIMIZED ORIGINAL SKILL EFFECTS
+
+Changes:
+- Added SWORD_SKILL_EFFECT_RENDERER for the 17 NEW_SWORD_SKILLS effects that previously could look like damage-only on fast/laggy frames.
+- Effects are original visual implementations. No Minecraft textures, models, particles, sounds, animations, or code were copied.
+- Gameplay behavior is preserved: damage values, cooldowns, target selection, and skill mechanics are not changed by the renderer.
+- Uses one lazily-created InstancedMesh sword pool (24 instances) shared by skills instead of creating one Mesh per flying sword.
+- Uses one lightweight Points particle system per active skill and a small number of shared geometric effects.
+- No PointLight is created per sword/particle. Existing skill-lighting system remains responsible for limited lighting.
+- Animation is time/delta based, with a minimum visual duration for very fast skills so a lag spike does not reduce the effect to a single visible damage event.
+- Effect renderer is automatically attached to skill activate/update/end lifecycle.
+- Existing Vạn Kiếm / Ngự Kiếm / Kiếm Vũ visual systems are left intact to avoid duplicating their heavier existing visual implementations.
+
+Validation:
+- node --check passed for all JavaScript files.
+- ZIP integrity checked after packaging.

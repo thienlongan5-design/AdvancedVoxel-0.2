@@ -1,0 +1,12 @@
+Advanced Voxel - Hình nhân luyện chiêu Titanite Nham
+
+- New item: titan_training_dummy
+- Material/style: Titanite Nham (layer 4), original blocky training dummy.
+- Counts as a real mob in GAME.mobs, so crosshair targeting and sword skills can target it.
+- 1000 HP; when HP reaches 0, it automatically resets after 0.75s for repeated testing.
+- Floating damage numbers and HP label are shown above the dummy.
+- Tap attack can damage the dummy with hand, Kiếm Quy Tinh, drills and any future item that exposes damage or attackDamage in GAME_DATA.items.
+- Drill attackDamage: I=4, II=6, III=8, IV=10; black Titanite tool=7.
+- Craft recipe: 4 Titanite Nham blocks + 1 Linh kiện -> 1 Hình nhân luyện chiêu Titanite Nham.
+- One dummy is granted in the starting inventory and hotbar for testing.
+- Natural mob spawn/despawn counts ignore training dummies, so placing dummies does not suppress normal mob spawning.

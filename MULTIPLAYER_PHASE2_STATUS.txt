@@ -1,0 +1,14 @@
+ADVANCED VOXEL — MULTIPLAYER PHASE 2
+
+Implemented: server-authoritative block edits and room world state.
+- blockRequest -> server validation -> blockAccepted/blockReject
+- server keeps per-room world edit map + revision
+- deterministic main-world terrain baseline for validation
+- worldState sent on room join
+- blockDelta broadcast to all clients
+- chunkRequest/chunkState for modified blocks
+- client optimistic placement/mining with rollback on rejection
+- reach, stale-block, eternal-block, occupied-block and dimension validation
+- no Web Worker
+
+Still intentionally not completed: server-authoritative inventory, combat, mobs, projectiles, skills, persistence and full voxel collision.

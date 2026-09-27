@@ -1,0 +1,18 @@
+ADVANCED VOXEL WEB GAME - FULL PLAYTEST BUILD
+
+Muc dich: ban day du hien tai de nhap vao Spck Editor va choi thu.
+
+1. Giai nen toan bo thu muc.
+2. Mo thu muc trong Spck Editor.
+3. Mo index.html.
+4. Chay Preview/Run.
+5. Khong xoa cac file .glb/.png/.js.
+
+Luu y:
+- Build dung Three.js r128 + GLTFLoader qua CDN trong index.html.
+- Can Internet khi Preview neu CDN chua duoc cache.
+- MASTER SPEC va HANDOFF duoc kem theo de doi chieu yeu cau.
+
+Validation da thuc hien:
+- node --check: tat ca JavaScript pass.
+- unzip -t: archive pass.

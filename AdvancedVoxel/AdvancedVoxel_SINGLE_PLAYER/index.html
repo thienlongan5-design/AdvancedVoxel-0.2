@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    >
+
+    <title>Advanced Voxel</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html,
+        body {
+            margin: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #000;
+            font-family: Arial, sans-serif;
+            touch-action: none;
+        }
+
+        /* PIXEL LOADING UI */
+        #loadingScreen{position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;background:#080d13;color:#eef7ff;font-family:monospace;image-rendering:pixelated}
+        #loadingScreen.hidden{display:none}
+        #loadingCard{width:min(88vw,430px);padding:24px 20px 20px;text-align:center;border:3px solid #41566b;background:#101a24;box-shadow:0 0 0 3px #05080c,8px 8px 0 #05080c}
+        #loadingTitle{font-size:28px;font-weight:900;letter-spacing:2px;text-shadow:3px 3px 0 #05080c;margin-bottom:8px}
+        #loadingSubtitle{font-size:11px;color:#9db2c3;margin-bottom:20px;line-height:1.5}
+        #loadingStage{font-size:15px;font-weight:900;min-height:22px;margin-bottom:8px}
+        #loadingPercent{font-size:13px;color:#9fdcff;font-weight:900;margin-bottom:9px}
+        #loadingTrack{width:100%;height:24px;padding:3px;border:3px solid #52697d;background:#070b10;box-shadow:inset 3px 3px 0 #030508,3px 3px 0 #05080c;overflow:hidden}
+        #loadingBar{width:0%;height:100%;background:#8ed7ff;box-shadow:inset 0 3px 0 #d9f4ff,inset 0 -3px 0 #4c91b8;transition:width .18s steps(8,end)}
+        #loadingHint{margin-top:13px;font-size:10px;color:#718999;line-height:1.5}
+
+        #game {
+            position: fixed;
+            inset: 0;
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+            touch-action: none;
+            user-select: none;
+        }
+
+        #crosshair {
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            width: 10px;
+            height: 10px;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 20;
+        }
+
+        #crosshair::before,
+        #crosshair::after {
+            content: "";
+            position: absolute;
+            background: rgba(255,255,255,.8);
+        }
+
+        #crosshair::before {
+            width: 10px;
+            height: 2px;
+            top: 4px;
+            left: 0;
+        }
+
+        #crosshair::after {
+            width: 2px;
+            height: 10px;
+            left: 4px;
+            top: 0;
+        }
+
+        #hud {
+            position: fixed;
+            left: 12px;
+            top: 10px;
+            color: white;
+            z-index: 30;
+            text-shadow: 1px 1px 2px #000;
+            pointer-events: none;
+        }
+
+        #health {
+            font-size: 17px;
+        }
+
+        #oxygen {
+            margin-top: 4px;
+            font-size: 15px;
+        }
+
+        #preview {
+            position: fixed;
+            right: 10px;
+            top: 10px;
+            width: 110px;
+            height: 110px;
+            border: 2px solid rgba(255,255,255,.45);
+            background: rgba(0,0,0,.28);
+            border-radius: 8px;
+            z-index: 25;
+            pointer-events: none;
+        }
+
+
+        #swordSkillButton {
+            position: fixed;
+            right: 18px;
+            bottom: 86px;
+            width: 92px;
+            min-height: 58px;
+            z-index: 35;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 2px;
+            border: 1px solid rgba(130,180,255,.45);
+            border-radius: 16px;
+            color: #eef6ff;
+            background: linear-gradient(145deg, rgba(30,45,88,.95), rgba(12,20,40,.96));
+            box-shadow: 0 5px 18px rgba(0,0,0,.3);
+            font-weight: 800;
+            touch-action: manipulation;
+        }
+        #swordSkillButton:disabled, .swordExtraSkill:disabled { opacity: .52; }
+        #swordSkillButton .skillName, .swordExtraSkill .skillName { font-size: 12px; }
+        #swordSkillButton .skillCd, .swordExtraSkill .skillCd { font-size: 11px; color: #b8d7ff; min-height: 13px; }
+        .swordExtraSkill {
+            position: fixed; right: 18px; width: 92px; min-height: 54px; z-index: 35;
+            display: none; align-items: center; justify-content: center; flex-direction: column; gap: 1px;
+            border: 1px solid rgba(130,180,255,.45); border-radius: 16px; color: #eef6ff;
+            background: linear-gradient(145deg, rgba(30,45,88,.95), rgba(12,20,40,.96));
+            box-shadow: 0 5px 18px rgba(0,0,0,.3); font-weight: 800; touch-action: manipulation;
+        }
+        #swordSkillButton2 { bottom: 150px; }
+        #swordSkillButton3 { bottom: 214px; }
+        @media (max-width:520px) {
+            #swordSkillButton { right: 16px; bottom: 86px; }
+            #swordSkillButton2 { right: 16px; bottom: 150px; }
+            #swordSkillButton3 { right: 16px; bottom: 214px; }
+        }
+
+
+        #swordSkillsMore{position:fixed;right:18px;bottom:278px;width:92px;min-height:48px;z-index:35;display:none;align-items:center;justify-content:center;flex-direction:column;gap:1px;border:1px solid rgba(150,200,255,.5);border-radius:15px;color:#eef6ff;background:linear-gradient(145deg,rgba(42,58,105,.96),rgba(10,18,36,.97));box-shadow:0 5px 18px rgba(0,0,0,.3);font-weight:800;touch-action:manipulation}
+        #newSwordSkillPanel{position:fixed;right:118px;bottom:78px;width:190px;max-height:430px;overflow:auto;z-index:36;display:none;grid-template-columns:1fr 1fr;gap:6px;padding:7px;border-radius:16px;background:rgba(8,14,28,.94);border:1px solid rgba(130,180,255,.38);box-shadow:0 8px 24px rgba(0,0,0,.38)}
+        #newSwordSkillPanel.open{display:grid}
+        .newSwordSkill{min-height:58px;border:1px solid rgba(130,180,255,.38);border-radius:12px;color:#eef6ff;background:linear-gradient(145deg,rgba(28,44,82,.96),rgba(10,17,34,.98));font-weight:800;touch-action:manipulation;display:none;align-items:center;justify-content:center;flex-direction:column;gap:1px}
+        .newSwordSkill:disabled{opacity:.48}.newSwordSkill .skillName{font-size:11px}.newSwordSkill .skillCd{font-size:10px;color:#b8d7ff;min-height:12px}
+
+        /* Chỉ dùng một thanh kỹ năng duy nhất. Ẩn toàn bộ UI kiếm cũ để không đè nút Kho/Chế tạo/Nhảy. */
+        #swordSkillButton,#swordSkillButton2,#swordSkillButton3,#swordSkillsMore,#newSwordSkillPanel,.swordExtraSkill,.newSwordSkill{display:none!important;}
+        /* Thanh kỹ năng compact: vẫn hiển thị icon + tên ngắn + cooldown. */
+        #swordSkillBar{position:fixed;left:50%;right:auto;bottom:68px;transform:translateX(-50%);z-index:35;display:none;align-items:center;gap:3px;width:min(72vw,920px);height:44px;padding:3px 4px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;background:linear-gradient(180deg,rgba(8,14,27,.90),rgba(5,10,20,.86));border:1px solid rgba(140,190,255,.28);border-radius:13px;backdrop-filter:blur(8px);box-shadow:0 6px 20px rgba(0,0,0,.28),inset 0 1px rgba(255,255,255,.06);touch-action:pan-x;box-sizing:border-box;}
+        #swordSkillBar::-webkit-scrollbar{display:none}
+        .skillSlot{position:relative;flex:0 0 52px;width:52px;height:42px;padding:2px 2px 1px;border:1px solid rgba(150,190,255,.24);border-radius:9px;background:linear-gradient(145deg,rgba(29,45,79,.95),rgba(8,14,28,.98));color:#eef6ff;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1px;font-weight:800;touch-action:manipulation;box-sizing:border-box;overflow:hidden;}
+        .skillSlot span{font-size:15px;line-height:14px;height:14px;flex:0 0 14px}
+        .skillSlot small{display:block;width:100%;font-size:7px;line-height:9px;font-weight:800;color:#e8f2ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;text-shadow:0 1px 2px #000;}
+        .skillSlot em{position:absolute;right:2px;bottom:1px;font-style:normal;font-size:7px;line-height:9px;color:#d8ebff;text-shadow:0 1px 2px #000;min-height:0;max-width:20px;overflow:hidden;}
+        .skillSlot.selected{border-color:rgba(235,246,255,.95);box-shadow:0 0 0 1px rgba(110,180,255,.55),0 0 12px rgba(90,140,255,.28);background:linear-gradient(145deg,rgba(48,73,125,.98),rgba(12,24,47,.98));transform:translateY(-1px)}
+        .skillSlot.cooldown{opacity:.48}
+        #swordSkillHint{position:fixed;left:50%;right:auto;bottom:115px;transform:translateX(-50%);z-index:34;display:none;padding:2px 8px;border-radius:8px;background:rgba(5,9,18,.58);color:#c5dcf2;font-size:8px;pointer-events:none;white-space:nowrap;max-width:55vw;overflow:hidden;text-overflow:ellipsis;text-align:center;border:1px solid rgba(140,190,255,.10)}
+        @media(max-width:700px){#swordSkillBar{width:min(84vw,760px);bottom:66px;height:46px;padding:2px 3px;gap:3px}.skillSlot{flex-basis:50px;width:50px;height:42px}.skillSlot span{font-size:14px}.skillSlot small{font-size:7px}#swordSkillHint{bottom:114px;font-size:8px;max-width:62vw}}
+
+        #hotbar {
+            position: fixed;
+            left: 50%;
+            bottom: 12px;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 4px;
+            padding: 5px;
+            background: rgba(15,18,22,.8);
+            border: 1px solid rgba(255,255,255,.25);
+            border-radius: 8px;
+            z-index: 30;
+        }
+
+        .slot {
+            width: 46px;
+            height: 46px;
+            border: 2px solid rgba(255,255,255,.25);
+            background: rgba(30,35,40,.9);
+            position: relative;
+        }
+
+        .slot.selected {
+            border-color: white;
+            box-shadow: 0 0 5px white;
+        }
+
+        .slot canvas {
+            width: 32px;
+            height: 32px;
+            position: absolute;
+            left: 5px;
+            top: 4px;
+            image-rendering: pixelated;
+        }
+
+        .count {
+            position: absolute;
+            right: 2px;
+            bottom: 0;
+            color: white;
+            font-size: 12px;
+            text-shadow: 1px 1px #000;
+        }
+
+
+        #uiQuickButtons { position:fixed; right:12px; top:12px; z-index:45; display:flex; gap:8px; }
+        .quickUi { min-width:66px; padding:8px 9px; border:1px solid rgba(170,220,255,.28); border-radius:12px; color:#eef8ff; background:linear-gradient(180deg,rgba(22,39,51,.96),rgba(8,15,21,.96)); box-shadow:0 7px 22px rgba(0,0,0,.35), inset 0 1px rgba(255,255,255,.08); font-weight:700; }
+        .quickUi span { display:block; font-size:10px; opacity:.78; margin-top:2px; }
+        .titanModal { position:fixed; inset:0; z-index:100; display:none; align-items:center; justify-content:center; padding:16px; background:rgba(2,7,11,.68); backdrop-filter:blur(7px); }
+        .titanPanel { width:min(96vw,900px); max-height:min(88vh,720px); overflow:auto; color:#eaf6ff; background:linear-gradient(145deg,#111e27,#091017 58%,#0d1720); border:1px solid rgba(150,214,246,.28); border-radius:18px; box-shadow:0 25px 80px rgba(0,0,0,.65), inset 0 1px rgba(255,255,255,.07); padding:16px; }
+        .titanTopbar { display:flex; align-items:center; justify-content:space-between; padding:2px 2px 14px; border-bottom:1px solid rgba(170,220,255,.12); }
+        .titanTopbar h2 { margin:0; font-size:22px; letter-spacing:.2px; }
+        .panelEyebrow { font-size:9px; letter-spacing:2px; color:#8fc7e8; opacity:.75; margin-bottom:3px; }
+        .uiClose { width:36px; height:36px; border:1px solid rgba(190,225,245,.22); background:#15232d; color:#fff; border-radius:10px; font-size:22px; line-height:1; }
+        .inventoryLayout { display:grid; grid-template-columns:minmax(0,1fr) 230px; gap:14px; padding-top:14px; }
+        .panelTabs { display:flex; gap:6px; overflow:auto; padding-bottom:9px; }
+        .invTab { flex:0 0 auto; border:1px solid rgba(160,210,235,.14); color:#a9bac6; background:#0d171e; border-radius:9px; padding:7px 11px; font-size:12px; }
+        .invTab.active { color:#fff; background:#1a3545; border-color:rgba(120,205,245,.45); box-shadow:inset 0 0 0 1px rgba(255,255,255,.04); }
+        .slotGridFrame { padding:10px; border-radius:14px; background:linear-gradient(145deg,#0a1218,#111d25); border:1px solid rgba(170,220,255,.12); }
+        #inventoryGrid { display:grid; grid-template-columns:repeat(8,minmax(42px,1fr)); gap:7px; }
+        .invSlot { min-width:0; aspect-ratio:1; position:relative; border:1px solid rgba(170,210,230,.16); border-radius:9px; background:linear-gradient(145deg,#1a2933,#0c141a); box-shadow:inset 0 1px rgba(255,255,255,.04); color:white; }
+        .invSlot.hasItem { border-color:rgba(190,225,245,.28); }
+        .invSlot.selected { border-color:#a7e2ff; box-shadow:0 0 0 1px rgba(100,210,255,.3),0 0 18px rgba(70,180,230,.18); background:linear-gradient(145deg,#203c4d,#10212b); }
+        .invSlot canvas { width:32px; height:32px; position:absolute; left:50%; top:50%; transform:translate(-50%,-54%); image-rendering:pixelated; }
+        .invCount { position:absolute; right:4px; bottom:2px; font-size:12px; font-weight:700; text-shadow:1px 1px #000; }
+        .inventoryFooter { display:flex; justify-content:space-between; gap:8px; margin-top:8px; color:#8195a3; font-size:11px; }
+        .itemInfoPanel { min-height:290px; padding:12px; border-radius:14px; border:1px solid rgba(170,220,255,.14); background:linear-gradient(160deg,rgba(25,42,53,.8),rgba(8,14,19,.85)); }
+        .itemPreviewBox { height:105px; display:grid; place-items:center; margin-bottom:12px; border-radius:12px; border:1px solid rgba(170,220,255,.1); background:radial-gradient(circle,rgba(78,156,194,.13),rgba(4,9,13,.35) 65%); }
+        #inventoryItemPreview { font-size:34px; color:#7fa9bd; }
+        #inventoryInfoName { font-weight:800; font-size:17px; }
+        #inventoryInfoCount { margin-top:5px; color:#b5d0df; font-size:13px; }
+        .itemMeta { margin-top:6px; color:#7f9ba9; font-size:11px; }
+        #inventoryInfoActions { display:grid; gap:7px; margin-top:14px; }
+        #inventoryInfoActions button, .craftToolbar button { padding:9px 11px; border-radius:9px; border:1px solid rgba(180,220,240,.17); color:white; font-weight:700; }
+        .primaryUi { background:linear-gradient(180deg,#24546b,#173544); }
+        .secondaryUi { background:#111c23; }
+        #inventoryHint { margin-top:12px; color:#708895; font-size:11px; line-height:1.45; }
+        .hotbarManager { margin-top:12px; padding:10px; border-radius:13px; border:1px solid rgba(170,220,255,.12); background:linear-gradient(145deg,#0b151c,#111f28); }
+        .hotbarManagerHead { display:flex; justify-content:space-between; gap:8px; align-items:center; margin-bottom:8px; color:#dcecf5; font-size:11px; }
+        .hotbarManagerHead span { color:#718895; text-align:right; }
+        #inventoryHotbar { display:grid; grid-template-columns:repeat(10,minmax(38px,1fr)); gap:5px; }
+        .manageHotSlot { min-width:0; aspect-ratio:1; position:relative; border:1px solid rgba(170,210,230,.16); border-radius:8px; background:#101c24; color:#fff; padding:0; }
+        .manageHotSlot.active { border-color:#b5eaff; box-shadow:0 0 0 1px rgba(100,210,255,.25),0 0 12px rgba(70,180,230,.15); }
+        .manageHotSlot canvas { width:28px; height:28px; position:absolute; left:50%; top:50%; transform:translate(-50%,-53%); image-rendering:pixelated; }
+        .manageHotSlot .slotNo { position:absolute; left:3px; top:2px; color:#718895; font-size:8px; }
+        .manageHotSlot .slotCount { position:absolute; right:3px; bottom:2px; font-size:9px; text-shadow:1px 1px #000; }
+        .dangerUi { background:linear-gradient(180deg,#4a252a,#30181c); border-color:rgba(255,120,120,.25) !important; }
+        .storageTitle{display:flex;justify-content:space-between;align-items:center;margin:10px 2px 7px;color:#d9edf7;font-size:12px}.storageTitle span{color:#718895;font-size:10px}.quickTransferTitle{margin-top:14px;color:#73b9d8;font-size:9px;letter-spacing:1.7px;font-weight:800}.manageHotSlot.dragOver{border-color:#a9ebff;background:#1d4052;box-shadow:0 0 0 2px rgba(100,215,255,.2),0 0 20px rgba(70,180,230,.22)}.invSlot.dragSource{opacity:.55;transform:scale(.96)}        .inventoryTools{display:grid;grid-template-columns:minmax(0,1fr) 170px;gap:8px;align-items:center}.invSearch{height:34px;display:flex;align-items:center;gap:5px;padding:0 9px;border:1px solid rgba(160,210,235,.14);border-radius:9px;background:#0b151c;color:#7f9aa7}.invSearch input{width:100%;border:0;outline:0;background:transparent;color:#eaf6ff;font-size:12px;min-width:0}.invSearch input::placeholder{color:#607783}.inventoryMain{min-width:0}.itemInfoPanel{display:flex;flex-direction:column}.itemInfoPanel .itemPreviewBox{height:76px;margin-bottom:8px}.itemInfoPanel #inventoryInfoName{font-size:14px}.itemInfoPanel #inventoryInfoCount{font-size:11px}.itemInfoPanel .itemMeta{font-size:10px}.itemInfoPanel #inventoryInfoActions{grid-template-columns:1fr 1fr;gap:5px;margin-top:9px}.itemInfoPanel #inventoryInfoActions button{min-height:32px;padding:6px 7px;font-size:10px}.itemInfoPanel #inventoryHint{font-size:9px;margin-top:8px}.hotbarManager{margin-top:9px;padding:8px}.hotbarManagerHead{margin-bottom:6px}.slotGridFrame{padding:8px}.invSlot{border-radius:8px}.manageHotSlot{border-radius:7px}.craftPanel #recipes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.craftPanel .recipe{margin:0;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px;padding:8px;border-radius:10px}.craftPanel .recipeTop{gap:7px}.craftPanel .recipeOutputIcon{width:38px;height:38px;border-radius:7px}.craftPanel .recipeTop strong{font-size:12px}.craftPanel .recipeTop div{font-size:9px!important}.craftPanel .recipeIngredients{gap:4px;margin-top:5px}.craftPanel .ingredientPill{padding:3px 5px;font-size:9px}.craftPanel .recipe button{min-width:74px;padding:7px 6px;font-size:10px;border-radius:8px}.craftToolbar{margin:9px 0}.craftToolbar button{padding:8px 10px;font-size:11px}.craftHint{font-size:9px}
+
+        @media (max-width:520px) { #inventoryHotbar { grid-template-columns:repeat(5,minmax(44px,1fr)); } .hotbarManagerHead { align-items:flex-start; flex-direction:column; } .hotbarManagerHead span { text-align:left; } }
+        .craftToolbar { display:flex; align-items:center; gap:10px; margin:14px 0; }
+        .craftHint { color:#718895; font-size:11px; }
+        .recipe { display:grid; grid-template-columns:1fr auto; gap:10px; margin:8px 0; padding:11px; border-radius:12px; border:1px solid rgba(170,220,255,.11); background:linear-gradient(145deg,rgba(24,39,48,.9),rgba(10,16,21,.9)); }
+        .recipeTop { display:flex; gap:10px; align-items:center; }
+        .recipeOutputIcon { width:46px; height:46px; image-rendering:pixelated; background:#091118; border-radius:9px; border:1px solid rgba(180,220,240,.15); }
+        .recipeIngredients { display:flex; flex-wrap:wrap; gap:5px; margin-top:8px; }
+        .ingredientPill { padding:4px 7px; border-radius:6px; background:rgba(255,255,255,.05); color:#a9c1cc; font-size:11px; }
+        .ingredientPill.missing { color:#ff9b9b; border:1px solid rgba(255,80,80,.22); }
+        .recipe button { align-self:center; min-width:100px; padding:8px 10px; border-radius:9px; border:1px solid rgba(180,220,240,.16); background:#17252d; color:#8196a1; }
+        .recipe button.canCraft { color:white; background:linear-gradient(180deg,#245c42,#173b2b); border-color:rgba(120,230,165,.28); }
+        @media (max-width:700px) { .inventoryLayout{grid-template-columns:1fr;gap:8px}.itemInfoPanel{min-height:0;padding:9px;display:grid;grid-template-columns:58px minmax(0,1fr);column-gap:9px;align-items:center}.itemInfoPanel .itemPreviewBox{grid-row:1 / span 3;width:58px;height:58px;margin:0}.itemInfoPanel #inventoryInfoActions{grid-column:1 / -1;grid-template-columns:repeat(4,1fr);margin-top:7px}.itemInfoPanel #inventoryInfoActions button{font-size:9px;min-height:30px}.itemInfoPanel #inventoryHint{grid-column:1 / -1}.craftPanel #recipes{grid-template-columns:1fr}.craftPanel .recipe{grid-template-columns:minmax(0,1fr) auto}.inventoryTools{grid-template-columns:1fr}.invSearch{height:32px}.recipe button{width:auto}}
+        @media (max-width:520px) { .titanModal{padding:6px}.titanPanel{width:100%;max-height:94vh;padding:8px;border-radius:13px}.titanTopbar{padding-bottom:8px}.titanTopbar h2{font-size:18px}.panelEyebrow{font-size:8px}.uiClose{width:32px;height:32px;font-size:20px}.panelTabs{gap:4px;padding-bottom:6px}.invTab{padding:6px 9px;font-size:10px}.slotGridFrame{padding:6px}.inventoryGrid{gap:5px}#inventoryGrid{grid-template-columns:repeat(5,minmax(0,1fr));gap:5px}.invSlot canvas{width:29px;height:29px}.invCount{font-size:10px;right:3px;bottom:1px}.inventoryFooter{font-size:9px}.inventoryFooter span:first-child{display:none}.hotbarManager{margin-top:7px}.hotbarManagerHead{font-size:9px}.hotbarManagerHead span{font-size:8px}.manageHotSlot canvas{width:25px;height:25px}.manageHotSlot .slotCount{font-size:8px}.manageHotSlot .slotNo{font-size:7px}.itemInfoPanel #inventoryInfoActions{grid-template-columns:repeat(4,1fr)}.itemInfoPanel #inventoryInfoActions button{font-size:8px;padding:5px 3px}.craftToolbar{gap:6px}.craftToolbar button{font-size:10px}.craftHint{font-size:8px}.quickUi{min-width:54px;padding:7px 7px}}
+
+
+        #touchControls {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 35;
+        }
+
+        #joystick {
+            position: absolute;
+            left: 20px;
+            bottom: 85px;
+            width: 115px;
+            height: 115px;
+            border: 2px solid rgba(255,255,255,.25);
+            border-radius: 50%;
+            pointer-events: auto;
+            touch-action: none;
+        }
+
+        #stick {
+            position: absolute;
+            width: 48px;
+            height: 48px;
+            left: 31px;
+            top: 31px;
+            border-radius: 50%;
+            background: rgba(255,255,255,.2);
+        }
+
+        #jump {
+            position: absolute;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,.3);
+            background: rgba(255,255,255,.12);
+            color: white;
+            pointer-events: auto;
+            z-index: 40;
+            user-select: none;
+        }
+
+        #jump { right: 20px; bottom: 90px; }
+
+        /* Chỉ ẩn tay cầm khi thiết bị thực sự dùng chuột/bút.
+           Không dựa vào chiều rộng CSS vì Chrome Android có thể báo viewport khác nhau. */
+        @media (pointer: fine) and (min-width: 900px) {
+            #touchControls {
+                display: none;
+            }
+        }
+
+        #damageOverlay, #visionOverlay {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 999;
+            opacity: 0;
+            transition: opacity 0.04s linear;
+        }
+        #damageOverlay {
+            background: radial-gradient(circle, rgba(255,255,255,0) 45%, rgba(190,25,25,0.72) 100%);
+        }
+        #visionOverlay {
+            background: radial-gradient(circle, rgba(0,0,0,0) 18%, rgba(0,0,0,0.72) 100%);
+        }
+        #health { transition: transform 0.1s ease; }
+    
+/* === IN-GAME SETTINGS / INVITE PIXEL UI === */
+.gameSettingsPixel{position:fixed;right:12px;top:126px;z-index:80;display:flex;align-items:center;gap:6px;padding:7px 9px;border:2px solid #52647b;background:#151f2b;color:#eef7ff;font:900 10px monospace;box-shadow:3px 3px 0 #05080c;image-rendering:pixelated;touch-action:manipulation}
+.gameSettingsPixel:active{transform:translate(2px,2px);box-shadow:1px 1px 0 #05080c}
+.pixelGear{width:14px;height:14px;display:block;position:relative;background:#9fdcff;box-shadow:0 0 0 2px #132131,inset 0 0 0 2px #4f8caf}
+.pixelGear:before{content:"";position:absolute;left:4px;top:4px;width:6px;height:6px;background:#15202b;box-shadow:-4px 0 #9fdcff,4px 0 #9fdcff,0 -4px #9fdcff,0 4px #9fdcff}
+.pixelOverlay{position:fixed;inset:0;z-index:13000;display:flex;align-items:center;justify-content:center;background:rgba(3,7,11,.88);font-family:monospace;image-rendering:pixelated}
+.pixelOverlay.hidden{display:none}
+.pixelSettingsPanel{width:min(94vw,620px);max-height:92vh;overflow:auto;padding:10px;background:#121b26;border:3px solid #4b6076;box-shadow:0 0 0 3px #05080c,8px 8px 0 #05080c;color:#eef7ff}
+.pixelSettingsHead{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:10px;background:#1d2a39;border:2px solid #536a81;margin-bottom:10px}.pixelSettingsHead h2{margin:2px 0 0;font-size:18px}.pixelEyebrow{font-size:8px;color:#78bde1;letter-spacing:2px}.pxBtn.small{width:auto;min-width:62px;padding:7px 9px}.settingsGrid{display:grid;gap:8px}.inviteInline{display:flex;gap:6px;align-items:center;width:100%}.smallInvite{display:block;flex:1;min-width:0;padding:8px 6px;font-size:15px;letter-spacing:3px}.pixelSettingsPanel .menuSection{margin-bottom:0}.pixelSettingsPanel .hidden{display:none!important}
+@media(max-width:520px){.gameSettingsPixel{top:116px;right:8px;padding:6px 7px;font-size:8px}.pixelSettingsPanel{width:96vw;padding:7px}.pixelSettingsHead h2{font-size:15px}.pixelSettingsPanel .menuRow{grid-template-columns:1fr}.smallInvite{font-size:13px}}
+
+/* === MAIN MENU / WORLD SELECT / SKIN / SETTINGS — ORIGINAL PIXEL UI === */
+#mainMenu{position:fixed;inset:0;z-index:12000;display:flex;align-items:center;justify-content:center;background:#080d13;font-family:monospace;color:#f4f7fb;}
+#mainMenu.hidden{display:none}
+.menuShell{width:min(94vw,520px);max-height:92vh;overflow:auto;background:#151c27;border:3px solid #3d4b60;box-shadow:0 0 0 2px #080b10,0 14px 0 #070a0e,0 22px 44px rgba(0,0,0,.55);padding:10px;}
+.menuTop{padding:16px 14px 13px;background:#202d3d;border:2px solid #52647b;box-shadow:inset 0 0 0 2px #101721;margin-bottom:10px;text-align:center;}
+.menuTitle{font-size:30px;font-weight:900;letter-spacing:2px;text-shadow:2px 2px #080b10,0 0 10px rgba(130,190,255,.18)}
+.menuSub{font-size:11px;color:#aebdce;margin-top:6px;letter-spacing:1px}
+.menuButtons{display:grid;gap:8px}
+.pxBtn{width:100%;min-height:48px;padding:10px 12px;border:2px solid #52647a;background:#26384a;color:#fff;font:900 15px monospace;box-shadow:inset 0 0 0 2px #151d28,0 3px 0 #080c12;cursor:pointer;text-align:left;}
+.pxBtn:hover{background:#324a60} .pxBtn:active{transform:translateY(2px);box-shadow:inset 0 0 0 2px #151d28,0 1px 0 #080c12}
+.pxBtn .mini{display:block;font-size:10px;color:#aebdce;margin-top:3px;font-weight:400}
+.menuFooter{margin-top:10px;padding:7px 8px;border:2px solid #303d4d;background:#0f151d;color:#8291a3;font-size:10px;text-align:center}
+.menuView{display:none}.menuView.active{display:block}
+.menuBack{margin-bottom:8px}.menuSection{border:2px solid #38485b;background:#101720;padding:10px;margin-bottom:8px}.menuSection h3{margin:0 0 8px;font-size:13px;color:#dce7f4}
+.menuRow{display:flex;gap:8px;align-items:center;margin:7px 0}.menuRow label{flex:1;font-size:11px;color:#b8c6d5}.menuInput,.menuSelect{width:58%;padding:9px 8px;border:2px solid #4b5b70;background:#0b1118;color:#fff;font:12px monospace;outline:none}.menuInput:focus,.menuSelect:focus{border-color:#91b8df}
+.modeGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.modeCard{border:2px solid #405066;background:#182230;padding:10px;cursor:pointer}.modeCard.active{border-color:#9bc8f5;background:#26384c;box-shadow:inset 0 0 0 2px #0d131b}.modeCard b{font-size:13px}.modeCard span{display:block;color:#91a2b5;font-size:10px;margin-top:4px;line-height:1.35}
+.skinGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.skinCard{border:2px solid #3c4b5e;background:#151f2b;padding:7px;text-align:center;cursor:pointer}.skinCard.active{border-color:#9bc8f5;background:#25364a}.skinPreview{height:58px;width:42px;margin:0 auto 6px;border:2px solid #0a0e13;box-shadow:inset 0 0 0 2px rgba(255,255,255,.12)}.skinName{font-size:9px;color:#d7e2ef}
+.swatchA{background:linear-gradient(#d9a67a 0 34%,#31465b 34% 72%,#151b24 72%)}.swatchB{background:linear-gradient(#8c5b42 0 34%,#5a2d39 34% 72%,#171318 72%)}.swatchC{background:linear-gradient(#b9c8d5 0 34%,#334f67 34% 72%,#101820 72%)}.swatchD{background:linear-gradient(#6f89a0 0 34%,#2d4b40 34% 72%,#111713 72%)}.swatchE{background:linear-gradient(#d1b47c 0 34%,#4d3c2c 34% 72%,#16120f 72%)}.swatchF{background:linear-gradient(#b68cc4 0 34%,#473c70 34% 72%,#14121e 72%)}
+.settingRange{width:58%}.menuHint{font-size:10px;color:#8192a5;line-height:1.45}.menuDanger{color:#ffb1a8}
+@media(max-width:430px){.menuShell{width:96vw}.menuTitle{font-size:25px}.pxBtn{min-height:45px}.skinGrid{grid-template-columns:repeat(3,1fr)}}
+/* INVITE / HOST PERMISSION PIXEL UI */
+.inviteCodeBox{display:flex;gap:7px;align-items:stretch}.inviteCode{flex:1;letter-spacing:4px;text-align:center;font-size:20px;font-weight:900;padding:10px 6px;border:2px solid #7188a3;background:#090f16;color:#dff1ff;box-shadow:inset 2px 2px 0 #05080c}.copyBtn{width:82px;border:2px solid #61758d;background:#2c4053;color:#fff;font:900 10px monospace}.permGrid{display:grid;grid-template-columns:1fr 1fr;gap:6px}.permItem{display:flex;align-items:center;justify-content:space-between;gap:6px;border:2px solid #334457;background:#151f2b;padding:7px;font:10px monospace;color:#d5e0ec}.permItem input{accent-color:#8fbde8}.memberList{display:grid;gap:6px}.memberCard{border:2px solid #3a4b60;background:#111a24;padding:8px}.memberHead{display:flex;justify-content:space-between;align-items:center;color:#fff;font-weight:900;font-size:11px}.memberRole{color:#91a8bf;font-size:9px}.memberActions{display:flex;gap:5px;margin-top:6px}.memberActions select{flex:1}.inviteJoinNote{font-size:10px;color:#8ea1b5;line-height:1.4}
+#singlePlayerOnly{display:block!important}
+</style>
+
+<style>
+/* Original unified-action feedback: brief tap confirmation, not copied from any game. */
+canvas.actionAttack { filter: brightness(1.16) saturate(1.08); }
+canvas.actionPlace { filter: brightness(1.10); }
+.quickUiPixel{display:flex;align-items:center;justify-content:center;gap:8px;min-width:128px;height:42px;border:3px solid #52697d;border-radius:0;background:#1c2b39;color:#fff;font:900 10px monospace;box-shadow:3px 3px 0 #05080c;image-rendering:pixelated}.quickUiPixel:active{transform:translate(2px,2px);box-shadow:1px 1px 0 #05080c}.pixelBag{width:16px;height:14px;display:inline-block;position:relative;border:3px solid #9edcff;background:#172633;box-shadow:2px 2px 0 #05080c}.pixelBag:before{content:"";position:absolute;left:3px;top:-7px;width:5px;height:5px;border:2px solid #9edcff;border-bottom:0}.pixelBag:after{content:"";position:absolute;left:3px;top:4px;width:4px;height:3px;background:#9edcff;box-shadow:6px 0 0 #9edcff}#craftQuickTab{border:2px solid #52697d;border-radius:0;background:#1c2b39;color:#fff;font:900 10px monospace;padding:7px 9px;box-shadow:2px 2px 0 #05080c}#craftQuickTab:active{transform:translate(2px,2px);box-shadow:none}
+</style>
+</head>
+
+<body>
+
+<button id="gameSettingsButton" class="gameSettingsPixel" aria-label="Cài đặt">
+    <span class="pixelGear" aria-hidden="true"></span><span>CÀI ĐẶT</span>
+</button>
+
+<div id="inGameSettings" class="pixelOverlay hidden">
+  <div class="pixelSettingsPanel">
+    <div class="pixelSettingsHead"><div><div class="pixelEyebrow">ADVANCED VOXEL</div><h2>CÀI ĐẶT TRONG GAME</h2></div><button id="closeInGameSettings" class="pxBtn small">ĐÓNG</button></div>
+    <div class="settingsGrid">
+      <section class="menuSection"><h3>CHẾ ĐỘ CỦA BẠN</h3>
+        <div class="menuRow"><label>Chế độ</label><select id="inGameModeSetting" class="menuSelect"><option value="survival">Sinh tồn</option><option value="free">Tự do</option><option value="explore">Khám phá</option><option value="observer">Quan sát</option></select></div>
+        <div id="modeExplain" class="menuHint"></div>
+      </section>
+      <section id="multiplayerSettingsSection" class="menuSection hidden"><h3>THẾ GIỚI NHIỀU NGƯỜI</h3>
+        <div class="menuRow"><label>Mã mời</label><div class="inviteInline"><span id="inGameInviteCode" class="inviteCode smallInvite">------</span><button id="copyInGameInviteBtn" class="copyBtn">SAO CHÉP</button></div></div>
+        <div class="menuRow"><label>Chế độ mặc định</label><select id="inGameDefaultMode" class="menuSelect"><option value="survival">Sinh tồn</option><option value="free">Tự do</option><option value="explore">Khám phá</option><option value="observer">Quan sát</option></select></div>
+        <div id="hostPermissionsBox" class="permGrid">
+          <label class="permItem">Phá khối <input id="inPermBreak" type="checkbox" checked></label>
+          <label class="permItem">Đặt khối <input id="inPermPlace" type="checkbox" checked></label>
+          <label class="permItem">Chiến đấu <input id="inPermCombat" type="checkbox" checked></label>
+          <label class="permItem">Nhặt đồ <input id="inPermPickup" type="checkbox" checked></label>
+          <label class="permItem">Dùng vật phẩm <input id="inPermUse" type="checkbox" checked></label>
+          <label class="permItem">Chat <input id="inPermChat" type="checkbox" checked></label>
+        </div>
+        <div id="inGameMemberList" class="memberList"></div>
+      </section>
+      <section class="menuSection"><h3>ĐỒ HỌA & ĐIỀU KHIỂN</h3>
+        <div class="menuRow"><label>Chất lượng</label><select id="inQualitySetting" class="menuSelect"><option value="low">Thấp</option><option value="medium">Trung bình</option><option value="high">Cao</option></select></div>
+        <div class="menuRow"><label>Đổ bóng</label><select id="inShadowSetting" class="menuSelect"><option value="off">Tắt</option><option value="on">Bật</option></select></div>
+        <div class="menuRow"><label>Độ nhạy camera</label><input id="inSensitivitySetting" class="settingRange" type="range" min="3" max="15" value="7"></div>
+        <div class="menuRow"><label>Âm lượng</label><input id="inVolumeSetting" class="settingRange" type="range" min="0" max="100" value="70"></div>
+      </section>
+    </div>
+    <button id="saveInGameSettings" class="pxBtn">✓ LƯU CÀI ĐẶT</button>
+    <div id="inGameSettingsStatus" class="menuFooter"></div>
+  </div>
+</div>
+
+<div id="loadingScreen" class="hidden">
+    <div id="loadingCard">
+        <div id="loadingTitle">Advanced Voxel</div>
+        <div id="loadingSubtitle">Đang chuẩn bị thế giới...</div>
+        <div id="loadingStage">Khởi tạo</div>
+        <div id="loadingPercent">0%</div>
+        <div id="loadingTrack"><div id="loadingBar"></div></div>
+        <div id="loadingHint">Bảng chờ chỉ xuất hiện sau khi bạn tạo hoặc vào một thế giới.</div>
+    </div>
+</div>
+
+<div id="mainMenu">
+  <div class="menuShell">
+    <div class="menuTop"><div class="menuTitle">ADVANCED VOXEL</div><div class="menuSub">PIXEL WORLDS • ORIGINAL SURVIVAL</div></div>
+    <div id="menuHome" class="menuView active">
+      <div class="menuButtons">
+        <button class="pxBtn" id="menuSingle">TẠO THẾ GIỚI CHƠI ĐƠN<span class="mini">Tạo thế giới mới và chơi ngoại tuyến</span></button>
+        <button class="pxBtn" id="menuMulti">TẠO THẾ GIỚI NHIỀU NGƯỜI<span class="mini">Mở thế giới và kết nối máy chủ</span></button>
+        
+        <button class="pxBtn" id="menuSkin">THAY ĐỔI SKIN<span class="mini">Chọn ngoại hình nhân vật gốc</span></button>
+        <button class="pxBtn" id="menuSettings">CÀI ĐẶT<span class="mini">Đồ họa, điều khiển và âm thanh</span></button>
+      </div>
+      <div class="menuFooter" id="menuProfile">Người chơi: Player • Chưa tạo thế giới</div>
+    </div>
+    <div id="menuWorld" class="menuView">
+      <button class="pxBtn menuBack" data-back>← QUAY LẠI</button>
+      <div class="menuSection"><div class="menuHint" style="border:2px solid #536a81;padding:8px;margin-bottom:8px">CHẾ ĐỘ CHƠI ĐƠN — MULTIPLAYER TẠM THỜI TẮT</div><h3 id="worldModeTitle">TẠO THẾ GIỚI CHƠI ĐƠN</h3>
+        <div class="menuRow"><label>Tên thế giới</label><input id="worldNameInput" class="menuInput" maxlength="24" value="Thế giới mới"></div>
+        <div class="menuRow"><label>Hạt thế giới</label><input id="worldSeedInput" class="menuInput" maxlength="24" value="ADVANCED"></div>
+        <div class="menuRow"><label>Chế độ</label><select id="worldGameMode" class="menuSelect"><option value="survival">Sinh tồn</option><option value="free">Tự do</option><option value="explore">Khám phá</option><option value="observer">Quan sát</option></select></div>
+        <div id="multiInviteRow" class="menuRow" style="display:none"><label>Mã mời</label><div class="inviteInline"><span id="worldInviteCode" class="inviteCode smallInvite">Đang tạo...</span><button id="copyWorldInviteBtn" class="copyBtn">SAO CHÉP</button></div></div>
+        <div id="multiServerRow" class="menuRow" style="display:none"><label>Máy chủ</label><input id="serverUrlInput" class="menuInput" maxlength="120" placeholder="ws://IP:PORT"></div>
+      </div>
+      <button class="pxBtn" id="createWorldBtn">▶ BẮT ĐẦU CHƠI</button>
+      <div class="menuFooter">Cấu hình được lưu trên thiết bị để lần sau mở lại nhanh hơn.</div>
+    </div>
+    <div id="menuInviteView" class="menuView">
+      <button class="pxBtn menuBack" data-back>← QUAY LẠI</button>
+      <div class="menuSection"><h3>VÀO BẰNG MÃ MỜI</h3>
+        <div class="menuRow"><label>Mã mời</label><input id="inviteJoinCode" class="menuInput" maxlength="8" placeholder="ABC123" style="text-transform:uppercase;letter-spacing:3px;text-align:center"></div>
+        <div class="inviteJoinNote">Mã mời do người tạo thế giới cung cấp. Sau khi nhập mã, máy chủ sẽ xác định thế giới và quyền mà chủ phòng đã cấp.</div>
+      </div>
+      <button class="pxBtn" id="joinInviteBtn">↪ VÀO THẾ GIỚI</button>
+      <div class="menuFooter" id="inviteJoinStatus">Chưa kết nối phòng.</div>
+    </div>
+    <div id="menuHostView" class="menuView">
+      <button class="pxBtn menuBack" data-back>← QUAY LẠI</button>
+      <div class="menuSection"><h3>MÃ MỜI CỦA THẾ GIỚI</h3>
+        <div class="inviteCodeBox"><div id="inviteCodeDisplay" class="inviteCode">------</div><button class="copyBtn" id="copyInviteBtn">SAO CHÉP</button></div>
+        <div class="menuHint" style="margin-top:7px">Người khác nhập mã này ở mục “NHẬP MÃ MỜI”. Mã gắn với phòng hiện tại.</div>
+      </div>
+      <div class="menuSection"><h3>CHẾ ĐỘ PHÒNG</h3>
+        <div class="menuRow"><label>Chế độ mặc định</label><select id="hostModeSetting" class="menuSelect"><option value="survival">Sinh tồn</option><option value="free">Tự do</option><option value="explore">Khám phá</option><option value="observer">Quan sát</option></select></div>
+        <div class="menuRow"><label>Cho phép PvP</label><select id="hostPvpSetting" class="menuSelect"><option value="on">Bật</option><option value="off">Tắt</option></select></div>
+      </div>
+      <div class="menuSection"><h3>QUYỀN MẶC ĐỊNH NGƯỜI ĐƯỢC MỜI</h3>
+        <div class="permGrid">
+          <label class="permItem">Phá khối <input id="permBreak" type="checkbox" checked></label>
+          <label class="permItem">Đặt khối <input id="permPlace" type="checkbox" checked></label>
+          <label class="permItem">Chiến đấu <input id="permCombat" type="checkbox" checked></label>
+          <label class="permItem">Nhặt đồ <input id="permPickup" type="checkbox" checked></label>
+          <label class="permItem">Dùng vật phẩm <input id="permUse" type="checkbox" checked></label>
+          <label class="permItem">Chat <input id="permChat" type="checkbox" checked></label>
+        </div>
+      </div>
+      <div class="menuSection"><h3>NGƯỜI CHƠI ĐƯỢC MỜI</h3><div id="memberList" class="memberList"><div class="menuHint">Chưa có người chơi tham gia.</div></div></div>
+      <button class="pxBtn" id="applyHostRulesBtn">✓ ÁP DỤNG QUYỀN PHÒNG</button>
+    </div>
+
+    <div id="menuSkinView" class="menuView">
+      <button class="pxBtn menuBack" data-back>← QUAY LẠI</button>
+      <div class="menuSection"><h3>SKIN NHÂN VẬT</h3><div class="skinGrid">
+        <div class="skinCard active" data-skin="war"><div class="skinPreview swatchA"></div><div class="skinName">Chiến Địa</div></div>
+        <div class="skinCard" data-skin="dark"><div class="skinPreview swatchB"></div><div class="skinName">Hắc Thiết</div></div>
+        <div class="skinCard" data-skin="crystal"><div class="skinPreview swatchC"></div><div class="skinName">Tinh Thạch</div></div>
+        <div class="skinCard" data-skin="ash"><div class="skinPreview swatchD"></div><div class="skinName">Tro Tàn</div></div>
+        <div class="skinCard" data-skin="blood"><div class="skinPreview swatchE"></div><div class="skinName">Huyết Diệp</div></div>
+        <div class="skinCard" data-skin="void"><div class="skinPreview swatchF"></div><div class="skinName">Hư Không</div></div>
+      </div></div>
+      <div class="menuSection"><div class="menuRow"><label>Tên người chơi</label><input id="playerNameInput" class="menuInput" maxlength="16" value="Player"></div><div class="menuHint">Tên chỉ dùng ký tự chữ, số, gạch dưới hoặc gạch ngang khi kết nối nhiều người.</div></div>
+      <button class="pxBtn" id="saveSkinBtn">✓ LƯU NGOẠI HÌNH</button>
+    </div>
+    <div id="menuSettingsView" class="menuView">
+      <button class="pxBtn menuBack" data-back>← QUAY LẠI</button>
+      <div class="menuSection"><h3>ĐỒ HỌA</h3>
+        <div class="menuRow"><label>Chất lượng</label><select id="qualitySetting" class="menuSelect"><option value="low">Thấp</option><option value="medium" selected>Trung bình</option><option value="high">Cao</option></select></div>
+        <div class="menuRow"><label>Đổ bóng</label><select id="shadowSetting" class="menuSelect"><option value="off">Tắt</option><option value="on" selected>Bật</option></select></div>
+        <div class="menuRow"><label>Khoảng nhìn</label><input id="viewSetting" class="settingRange" type="range" min="1" max="4" value="3"></div>
+      </div>
+      <div class="menuSection"><h3>ĐIỀU KHIỂN</h3>
+        <div class="menuRow"><label>Độ nhạy camera</label><input id="sensitivitySetting" class="settingRange" type="range" min="3" max="15" value="7"></div>
+        <div class="menuRow"><label>Rung khi va chạm</label><select id="vibrationSetting" class="menuSelect"><option value="on">Bật</option><option value="off">Tắt</option></select></div>
+      </div>
+      <div class="menuSection"><h3>ÂM THANH</h3><div class="menuRow"><label>Âm lượng</label><input id="volumeSetting" class="settingRange" type="range" min="0" max="100" value="70"></div></div>
+      <button class="pxBtn" id="saveSettingsBtn">✓ LƯU CÀI ĐẶT</button>
+      <div class="menuFooter menuDanger">Thiết lập mới áp dụng cho giao diện và hệ thống có hỗ trợ tương ứng.</div>
+    </div>
+  </div>
+</div>
+<div id="game"></div>
+<div id="damageOverlay"></div>
+<div id="visionOverlay"></div>
+
+<div id="hud">
+    <div id="health">❤️ 60 / 60</div>
+    <div id="oxygen">🫁 O₂ 100%</div>
+</div>
+
+<div id="preview"></div>
+
+<div id="crosshair"></div>
+
+<div id="uiQuickButtons">
+    <button id="inventoryButton" class="quickUi quickUiPixel"><span class="pixelBag" aria-hidden="true"></span><span>KHO / CHẾ TẠO</span></button>
+</div>
+
+<div id="inventoryMenu" class="titanModal">
+    <div class="titanPanel">
+        <div class="titanTopbar"><div><div class="panelEyebrow">TITAN SYSTEM</div><h2>Kho đồ</h2></div><div style="display:flex;gap:6px;align-items:center"><button id="craftQuickTab">CHẾ TẠO</button><button id="closeInventory" class="uiClose">×</button></div></div>
+        <div class="inventoryLayout">
+            <section class="inventoryMain">
+                <div class="inventoryTools"><div class="panelTabs"><button class="invTab active" data-filter="all">Tất cả</button><button class="invTab" data-filter="block">Khối</button><button class="invTab" data-filter="tool">Công cụ</button><button class="invTab" data-filter="material">Vật liệu</button></div><label class="invSearch"><span>⌕</span><input id="inventorySearch" type="search" inputmode="search" autocomplete="off" placeholder="Tìm vật phẩm..."></label></div>
+                <div class="storageTitle"><b>Kho chính</b><span>30 ô</span></div>
+                <div class="slotGridFrame"><div id="inventoryGrid"></div></div>
+                <div class="inventoryFooter"><span>Chạm chọn • chạm đôi lấy nhanh • giữ để chia đôi • kéo để sắp xếp</span><span>Ô đang chọn: <b id="selectedHotbarLabel">1</b></span></div>
+                <div class="hotbarManager">
+                    <div class="hotbarManagerHead"><strong>Thanh công cụ nhanh</strong><span>Kéo vật phẩm vào bất kỳ ô nào</span></div>
+                    <div id="inventoryHotbar"></div>
+                </div>
+            </section>
+            <aside id="inventoryInfo" class="itemInfoPanel">
+                <div class="itemPreviewBox"><div id="inventoryItemPreview">+</div></div>
+                <div id="inventoryInfoName">Chưa chọn vật phẩm</div>
+                <div id="inventoryInfoCount"></div>
+                <div id="inventoryInfoType" class="itemMeta"></div>
+                <div class="quickTransferTitle">QUẢN LÝ NHANH</div>
+                <div id="inventoryInfoActions"><button id="quickMoveInventory" class="primaryUi">⚡ Vào hotbar</button><button id="splitHalfInventory" class="secondaryUi">½ Chia đôi</button><button id="takeOneInventory" class="secondaryUi">＋ Lấy 1</button><button id="mergeInventoryStacks" class="secondaryUi">↔ Gộp</button><button id="takeToHotbar" class="primaryUi">→ Ô đang chọn</button><button id="putToEmptyHotbar" class="secondaryUi">＋ Ô trống</button><button id="clearSelectedHotbar" class="dangerUi">× Gỡ ô</button></div>
+                <div id="inventoryHint">⚡ Lấy nhanh cho PvP • Giữ vật phẩm để chia đôi • Chọn ô khác rồi Gộp stack. Thanh công cụ là lối tắt, không làm mất tổng vật phẩm.</div>
+            </aside>
+        </div>
+    </div>
+</div>
+
+<div id="craftMenu" class="titanModal">
+    <div class="titanPanel craftPanel">
+        <div class="titanTopbar"><div><div class="panelEyebrow">FABRICATION CORE</div><h2>Chế tạo</h2></div><button id="closeCraft" class="uiClose">×</button></div>
+        <div class="craftToolbar"><button id="craftAllButton" class="primaryUi">⚡ Chế tạo tất cả</button><span class="craftHint">Nguyên liệu tự trừ trong kho.</span></div>
+        <div id="recipes"></div>
+    </div>
+</div>
+
+
+<div id="swordSkillBar" aria-label="Thanh kỹ năng Kiếm Quy Tinh">
+  <button class="skillSlot" data-skill="kiemLuuQuang"><span>✦</span><small>Kiếm Lưu Quang</small><em></em></button>
+  <button class="skillSlot" data-skill="baoKiem"><span>✹</span><small>Bạo Kiếm</small><em></em></button>
+  <button class="skillSlot" data-skill="thienLaKiem"><span>✥</span><small>Thiên La Kiếm</small><em></em></button>
+  <button class="skillSlot" data-skill="kiemToa"><span>⊛</span><small>Kiếm Tỏa</small><em></em></button>
+  <button class="skillSlot" data-skill="kiemBao"><span>✺</span><small>Kiếm Bão</small><em></em></button>
+  <button class="skillSlot" data-skill="xuyenTamKiem"><span>➶</span><small>Xuyên Tâm</small><em></em></button>
+  <button class="skillSlot" data-skill="kiemPhong"><span>〰</span><small>Kiếm Phong</small><em></em></button>
+  <button class="skillSlot" data-skill="hoiKiem"><span>↺</span><small>Hồi Kiếm</small><em></em></button>
+  <button class="skillSlot" data-skill="cuuLienKiem"><span>❖</span><small>Cửu Liên</small><em></em></button>
+  <button class="skillSlot" data-skill="vanAnhKiem"><span>✧</span><small>Vạn Ảnh</small><em></em></button>
+  <button class="skillSlot" data-skill="vanKiem"><span>⚔</span><small>Vạn Kiếm</small><em></em></button>
+  <button class="skillSlot" data-skill="nguKiem"><span>🗡</span><small>Ngự Kiếm</small><em></em></button>
+  <button class="skillSlot" data-skill="kiemVu"><span>✦</span><small>Kiếm Vũ</small><em></em></button>
+  <button class="skillSlot" data-skill="kiemKhi"><span>➤</span><small>Kiếm Khí</small><em></em></button>
+  <button class="skillSlot" data-skill="kiemTran"><span>◈</span><small>Kiếm Trận</small><em></em></button>
+  <button class="skillSlot" data-skill="phiKiem"><span>➹</span><small>Phi Kiếm</small><em></em></button>
+  <button class="skillSlot" data-skill="thienKiem"><span>↡</span><small>Thiên Kiếm</small><em></em></button>
+  <button class="skillSlot" data-skill="kiemAnh"><span>✧</span><small>Kiếm Ảnh</small><em></em></button>
+  <button class="skillSlot" data-skill="lienTram"><span>≋</span><small>Liên Trảm</small><em></em></button>
+  <button class="skillSlot" data-skill="kiemGioi"><span>◎</span><small>Kiếm Giới</small><em></em></button>
+</div>
+
+<div id="swordSkillHint">Chọn chiêu rồi chạm mục tiêu để thi triển</div>
+
+<div id="hotbar"></div>
+
+<div id="touchControls">
+    <div id="joystick">
+        <div id="stick"></div>
+    </div>
+    <button id="jump">↑</button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+
+<script src="./data/worldWarData.js"></script>
+<script src="./data/skills.js"></script>
+<script src="./texture.js"></script>
+<script src="./loader.js"></script>
+<script src="./collision.js"></script>
+<script src="./world.js"></script>
+<script src="./player.js"></script>
+<script src="./mod.js"></script>
+<script src="./game.js"></script>
+<script src="./upgrade.js"></script>
+<script src="./features.js"></script>
+<script src="./mainMenu.js"></script>
+
+</body>
+</html>

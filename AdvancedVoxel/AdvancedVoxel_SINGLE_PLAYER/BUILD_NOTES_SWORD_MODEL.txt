@@ -1,0 +1,6 @@
+Kiếm Quy Tinh model sync update
+- Kiếm cầm trên tay và kiếm bay Vạn Kiếm Quy Tông dùng cùng một nguồn hình học.
+- Đã loại bỏ các mảng xám/đen dạng hộp lớn che lưỡi.
+- Lưỡi, lõi năng lượng, hộ thủ, tinh thể, chuôi và đầu kiếm đều xuất hiện ở hai mặt.
+- Kiếm bay dùng InstancedMesh từ chính model cầm tay để giữ hiệu năng mobile.
+- Tầm mục tiêu 40 block, tồn tại 20 giây, hồi chiêu 60 giây.

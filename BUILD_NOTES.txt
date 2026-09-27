@@ -1,0 +1,14 @@
+AdvancedVoxel – Kiếm Quy Tinh Visual/Orbit Upgrade
+
+- Reworked the held 3D Kiếm Quy Tinh model to closely match the provided reference:
+  broad faceted blade, luminous center ridge, blue rails, ornate symmetric gold guard,
+  central blue/violet relic, layered wing ornaments, detailed grip bands and crystal pommel.
+- Reworked the 144 airborne Vạn Kiếm Quy Tông blades to use the same visual language and
+  added symmetric guard geometry plus blade ridge/energy detail.
+- Moved orbiting swords farther from the player to reduce camera obstruction:
+  orbit radius approximately 4.15–5.30 blocks.
+- Expanded the protective glow ring to match the new orbit distance.
+- Target range remains 40 blocks; skill duration 20 seconds; cooldown 60 seconds.
+- 144 swords remain InstancedMesh-based for mobile performance.
+
+Skill UI: compact skill bar above hotbar; tap a skill to select, then tap the world/target to cast. Ngự Kiếm toggles on/off.

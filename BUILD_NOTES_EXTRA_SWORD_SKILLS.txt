@@ -1,0 +1,17 @@
+Advanced Voxel - Extra Sword Skills
+
+Added to the current Kiếm Quy Tinh build:
+1. Ngự Kiếm
+   - 12 seconds active
+   - 30 seconds cooldown
+   - Uses the same Kiếm Quy Tinh model under the player
+   - Hover/ride visual and movement speed 9
+2. Kiếm Vũ
+   - Requires an enemy in the crosshair within 40 blocks
+   - 36 swords fall toward the target
+   - 12 damage per sword, each sword can hit once
+   - 6 seconds skill window
+   - 25 seconds cooldown
+
+Vạn Kiếm Quy Tông remains unchanged: 144 swords, 20s duration, 60s cooldown,
+40-block target range.

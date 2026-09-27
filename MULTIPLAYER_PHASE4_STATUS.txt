@@ -1,0 +1,29 @@
+ADVANCED VOXEL — MULTIPLAYER PHASE 4
+
+Implemented on top of Phase 3:
+- Server-authoritative 30-slot inventory state.
+- Server-authoritative 12-slot hotbar and selected slot.
+- Server-authoritative equipment state: head/chest/legs/feet/shield/weapon.
+- Equipment type validation for World War armor, shields, swords/axes/bows and Quy Tinh.
+- Inventory request protocol with validation for:
+  move/swap, split, takeOne, hotbar assignment, clear hotbar, select hotbar,
+  equip, unequip, consume, add and crafting.
+- Server-side item registry covering the existing base IDs and the 128 World War gear/items.
+- Max stack validation, item ownership checks, inventory-full checks and request rejection.
+- Inventory state is sent after authoritative mutations; client UI reconciles from server state.
+- Multiplayer block placement now includes the selected item ID; server validates possession and consumes the item only after the block edit passes validation.
+- Client no longer locally decrements placed block inventory while multiplayer authority is active.
+- Multiplayer crafting for the two current recipes is server-authoritative.
+- Existing offline/local inventory behavior is preserved when multiplayer is disabled.
+
+Known scope remaining:
+- Drops/pickups are not yet server-authoritative.
+- Placeable entities (Training Dummy / Decoy) are not yet network-authoritative.
+- Combat/damage, mobs, projectiles and skills are not yet server-authoritative.
+- Persistence/account save is not yet implemented.
+- War World full generation/network parity is not yet implemented.
+
+Validation performed:
+- Node syntax check passed for every JS file in the build.
+- ZIP integrity check passed.
+- Live WebSocket runtime was not executed because the current environment does not have the `ws` package installed; do not treat this as a live server test.

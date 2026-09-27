@@ -1,0 +1,26 @@
+ADVANCED VOXEL MULTIPLAYER — PHASE 1
+
+Implemented for the actual game:
+- Real WebSocket client/server connection.
+- Server-generated player IDs.
+- Room join/leave and capacity limit.
+- Fixed 20 Hz server simulation.
+- Client sends input, not authoritative position.
+- Server calculates player movement.
+- Server sends 20 Hz snapshots.
+- Local client performs basic reconciliation.
+- Other players are rendered as remote player entities.
+- Remote players use interpolation.
+- Automatic reconnect and heartbeat.
+- Socket bufferedAmount guard.
+- Dimension field is synchronized at the player-state level.
+
+Not falsely marked complete yet:
+- Server voxel collision/chunk authority.
+- Persistent multiplayer world save.
+- Server inventory/equipment authority.
+- Server mob/entity simulation.
+- Server gameplay-action validation.
+- Full anti-cheat validation.
+
+Next phase should add the server-side voxel/chunk state and block-change protocol before adding further authoritative gameplay systems.

@@ -1,0 +1,9 @@
+KIẾM QUY TINH — HỆ THỐNG ÁNH SÁNG 20 KỸ NĂNG
+
+- Thêm SWORD_SKILL_LIGHTING cho toàn bộ 20 kỹ năng trên thanh kỹ năng.
+- Mỗi kỹ năng có màu ánh sáng riêng để dễ nhận biết.
+- Hiệu ứng gồm vòng sáng, lõi sáng và PointLight động; cường độ nhấp nháy nhẹ theo thời gian.
+- Chiêu đánh mục tiêu có ánh sáng tập trung tại mục tiêu; chiêu vùng có vòng sáng quanh người chơi.
+- Hiệu ứng tự hủy khi kỹ năng kết thúc hoặc khi hết thời gian burst, tránh đèn tồn đọng.
+- Tối ưu mobile: mỗi hiệu ứng chỉ dùng tối đa 2 PointLight, không tạo một đèn cho từng thanh kiếm.
+- Không thay đổi sát thương, cooldown hoặc cơ chế chiến đấu hiện có.

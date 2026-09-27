@@ -1,0 +1,9 @@
+Advanced Voxel - Touch/UI + Ngu Kiem Fix
+
+Changes:
+1. Removed/hidden legacy sword skill buttons and panels so they cannot overlap the new 20-skill bar.
+2. Repositioned Kho/Chế tạo quick buttons to the top-right.
+3. Made the 20-skill bar compact, horizontally scrollable, and reserved the right side for the jump button.
+4. Ngự Kiếm now adapts its base ride height to higher terrain, preventing the player from sinking through raised blocks.
+5. While Ngự Kiếm is active, Jump gives a short upward lift (~1 block) instead of requiring grounded state.
+6. Returning to lower terrain restores the normal activation height (plus the temporary jump arc).

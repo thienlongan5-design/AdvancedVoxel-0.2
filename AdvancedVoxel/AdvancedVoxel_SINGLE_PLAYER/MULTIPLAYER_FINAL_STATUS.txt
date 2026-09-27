@@ -1,0 +1,16 @@
+ADVANCED VOXEL MULTIPLAYER — FINAL AUTHORITY BUILD
+
+Phase 1: authoritative player sync/prediction/reconciliation.
+Phase 2: authoritative voxel edits/chunk state.
+Phase 3: authoritative voxel collision/gravity/jump.
+Phase 4: authoritative 30-slot inventory, hotbar and equipment, validated 128 World War gear registry.
+Phase 5: authoritative player combat/damage/armor/respawn.
+Phase 6: authoritative Warden/Ravage entities, AI, aggro, melee and ranged attacks.
+Phase 7: authoritative projectile simulation and snapshots.
+Phase 8: server validation/cooldowns/damage scheduling for all 20 Quy Tinh skills.
+Phase 9: mob/drop/entity synchronization.
+Phase 10: persistent room voxel edits and persistent player inventory keyed by a client-generated player key.
+Phase 11: War World dimension is now the active replacement for the old Serpent Void identifier; server/client accept `war`.
+Phase 12: bounded entity counts, 20 Hz authoritative simulation, lower-frequency entity snapshots, buffered WebSocket protection and mobile-oriented limits.
+
+Validation: all JavaScript files pass Node syntax checking; ZIP integrity is checked before release. Live WebSocket runtime still requires `npm install` in server/ because `ws` is an external dependency.

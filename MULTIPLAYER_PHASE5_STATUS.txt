@@ -1,0 +1,22 @@
+ADVANCED VOXEL MULTIPLAYER — PHASE 5
+Combat + Damage Authority
+
+Implemented:
+- Server-authoritative player-vs-player melee attack requests.
+- Server validates weapon ownership, selected hotbar/equipment weapon, target, dimension, reach and attack cooldown.
+- Server computes weapon raw damage from the World War sword registry + Quy Tinh.
+- Server applies armor defense mitigation from the equipped armor set pieces.
+- Server owns player HP and broadcasts combatHit.
+- Server handles zero HP by authoritative respawn at the main-world spawn.
+- Client combatSync sends attackRequest and receives combatHit/combatReject/playerRespawn.
+- Remote player raycast targeting added to multiplayer runtime.
+- Unified mobile tap action routes remote-player attacks through server authority.
+- Existing local mob/training-dummy combat remains unchanged until the dedicated mob/entity authority phase.
+
+Validation:
+- Node syntax check: PASS for all JavaScript files.
+- Source tree packaged after validation.
+- WebSocket runtime not executed in this environment because ws is not installed here; package.json declares ws ^8.18.0.
+
+Next order:
+Phase 6 = authoritative mobs + AI/entity synchronization.
